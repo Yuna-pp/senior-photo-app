@@ -7,14 +7,11 @@ from PIL.ExifTags import TAGS
 register_heif_opener()
 st.set_page_config(page_title="父母相册助手", layout="centered")
 
-# --- 核心黑科技：缓存底图 (Cache the base image) ---
-# 只要不换上传的文件，就不会重新执行读取和旋转逻辑 [cite: 2026-02-26]
+# --- 核心缓存：确保大图处理不卡顿 ---
 @st.cache_data(show_spinner=False)
 def load_and_fix_image(file):
     raw_img = Image.open(file)
-    # 这一步最耗时，现在被缓存保护起来了 [cite: 2026-02-26]
-    img = ImageOps.exif_transpose(raw_img)
-    return img
+    return ImageOps.exif_transpose(raw_img)
 
 def get_accurate_date(image):
     try:
@@ -29,42 +26,48 @@ def get_accurate_date(image):
         pass
     return None
 
-st.title("📸 父母相册助手 (V3.4 丝滑版)")
+st.title("📸 相册助手 (稳如泰山版)")
 
-# --- 第一步：上传 (最上方) ---
+# --- 1. 上传区 ---
 uploaded_file = st.file_uploader(
     "第一步：点击下方上传照片", 
     type=["jpg", "jpeg", "png", "heic", "heif", "dng"]
 )
 
 if uploaded_file:
-    # 2. 从缓存读取底图 (Base Image)
-    # 即使你动滑块，这一步也会因为缓存而秒开 [cite: 2026-02-26]
+    # 加载底图
     base_img = load_and_fix_image(uploaded_file).copy()
     w, h = base_img.size
     
-    # --- 第三步：高级功能 (放在侧边栏，保留伸缩，但不影响实时性) ---
-    st.sidebar.header("🎨 高级美化选项")
+    # --- 2. 侧边栏：高级选项 (保留伸缩) ---
+    st.sidebar.header("🎨 样式与精确位置")
     color_options = {"亮黄色": "#FFFF00", "纯白色": "#FFFFFF", "大红色": "#FF0000", "黑色": "#000000"}
     selected_color = color_options[st.sidebar.selectbox("文字颜色:", list(color_options.keys()))]
     
     st.sidebar.divider()
-    # 坐标调节：现在是实时的，不会闪烁了！ [cite: 2026-02-26]
     pos_x = st.sidebar.slider("左右挪动位置:", 0, w, int(w * 0.1))
     pos_y = st.sidebar.slider("上下挪动位置:", 0, h, int(h * 0.8))
 
-    # --- 第二步：基础设置 (图片下方) ---
-    st.subheader("⚙️ 基础文字设置")
+    # --- 3. 核心布局修改：先挖坑，后填图 ---
+    # 这个占位符会让图片显示在设置按钮的上方
+    image_preview_placeholder = st.empty()
+
+    st.divider() # 加一条分割线，视觉更整洁
+
+    # --- 4. 基础设置区 (放在图片下方) ---
+    st.subheader("⚙️ 调整文字信息")
     col1, col2, col3 = st.columns([2, 1, 1])
+    
     with col1:
-        location = st.text_input("地点:", "")
+        location = st.text_input("地点 (不填不显示):", "")
     with col2:
         font_size = st.number_input("字的大小:", 50, 1500, 300)
     with col3:
         detected_date = get_accurate_date(base_img)
-        final_date = st.date_input("确认日期:", detected_date if detected_date else datetime.date.today())
+        # 默认显示检测到的日期，没检测到就显示 2026-03-03
+        final_date = st.date_input("日期确认:", detected_date if detected_date else datetime.date.today())
 
-    # --- 绘图逻辑 (只重绘文字，不重读照片) ---
+    # --- 5. 绘图渲染 ---
     draw = ImageDraw.Draw(base_img)
     display_text = f"{final_date} {location}" if location.strip() else f"{final_date}"
     
@@ -73,12 +76,12 @@ if uploaded_file:
     except:
         font = ImageFont.load_default()
 
-    # 极简绘制
     draw.text((pos_x, pos_y), display_text, fill=selected_color, font=font)
     
-    # 实时显示 [cite: 2026-02-26]
-    st.image(base_img, caption="预览效果 (满意后长按保存)", use_container_width=True)
-    st.success("现在调节滑块，字会实时跟着动了！")
+    # 把画好的图塞进刚才挖的“坑”里
+    image_preview_placeholder.image(base_img, caption="预览效果 (满意后长按保存)", use_container_width=True)
+    
+    st.success("调整下方参数，上方的图片会实时变化。")
 
 else:
     st.info("请先上传一张照片。")
