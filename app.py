@@ -45,7 +45,7 @@ def get_image_base64(image):
     image.save(buffered, format="JPEG", quality=85) # 适当降低质量确保 Base64 不溢出
     return base64.b64encode(buffered.getvalue()).decode()
 
-st.title("📸 华为/荣耀全显版 (V4.2)")
+st.title("📸 测试版 (V4.2)")
 
 uploaded_file = st.file_uploader("第一步：上传照片", type=["jpg", "jpeg", "png", "heic", "heif"])
 
