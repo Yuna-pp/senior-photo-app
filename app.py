@@ -5,7 +5,7 @@ import datetime
 import os
 
 st.set_page_config(page_title="相册助手", layout="centered")
-st.title("📸 父母相册助手 (稳如泰山版)")
+st.title("老人相册助手 (稳如泰山版)")
 
 # --- 核心函数：精准抓取拍摄时间 ---
 def get_safe_date(image):
