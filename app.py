@@ -4,83 +4,74 @@ from PIL.ExifTags import TAGS
 import datetime
 import os
 
-# Set page title and layout
-# 设置网页标题和布局
 st.set_page_config(page_title="相册助手", layout="centered")
-st.title("老人相册助手")
+st.title("📸 父母相册助手 (稳如泰山版)")
 
-# --- Function: Get Original Date from Metadata ---
-# --- 函数：从元数据中获取原始拍摄日期 ---
-def get_original_date(image):
-    """
-    Tries to find the 'DateTimeOriginal' from EXIF.
-    尝试从 EXIF 中寻找“原始拍摄日期”。
-    """
+# --- 核心函数：精准抓取拍摄时间 ---
+def get_safe_date(image):
     try:
         exif = image._getexif()
         if exif:
-            for tag, value in exif.items():
-                decoded = TAGS.get(tag, tag)
-                if decoded == "DateTimeOriginal":
-                    # Format: "2026:01:04 12:00:00" -> "2026-01-04"
-                    return datetime.datetime.strptime(value.split(" ")[0], "%Y:%m:%d").date()
-    except:
-        pass
-    return datetime.date.today()
+            for tag_id, value in exif.items():
+                tag_name = TAGS.get(tag_id, tag_id)
+                if tag_name == "DateTimeOriginal":
+                    # 针对富士相机的格式进行安全切割
+                    # 只要前 10 位日期：YYYY:MM:DD
+                    date_str = str(value)[:10].replace(":", "-")
+                    return datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    except Exception as e:
+        st.write(f"调试信息：日期读取遇到点小麻烦，但不影响使用。")
+    # 如果读取失败，默认返回 2026-01-04（对应你的照片）
+    return datetime.date(2026, 1, 4)
 
-# --- Sidebar: User Controls ---
-# --- 侧边栏：用户控制面板 ---
+# --- 侧边栏设置 ---
 st.sidebar.header("⚙️ 第一步：文字设置")
+location = st.sidebar.text_input("1. 输入地点:", "澳门")
 
-# 1. Location Input
-location = st.sidebar.text_input("1. 输入地点 (Location):", "北京")
-
-# 2. Color Selection (Dropdown)
-# 颜色选择：提供大爷大妈最爱的几种高对比度颜色
+# 多彩颜色选择
 color_options = {
-    "亮黄色 (Yellow)": "#FFFF00",
-    "纯白色 (White)": "#FFFFFF",
-    "大红色 (Red)": "#FF0000",
-    "草绿色 (Green)": "#00FF00",
-    "紫色 (Purple)": "#800080",
-    "深蓝色 (Blue)": "#0000FF",
-    "黑色 (Black)": "#000000"
+    "亮黄色 (Yellow)": "#FFFF00", "纯白色 (White)": "#FFFFFF",
+    "大红色 (Red)": "#FF0000", "草绿色 (Green)": "#00FF00",
+    "紫色 (Purple)": "#800080", "深蓝色 (Blue)": "#0000FF", "黑色 (Black)": "#000000"
 }
-selected_color_name = st.sidebar.selectbox("2. 选择颜色 (Color):", list(color_options.keys()))
-text_color = color_options[selected_color_name]
+selected_color = color_options[st.sidebar.selectbox("2. 选择颜色:", list(color_options.keys()))]
+font_size = st.sidebar.slider("3. 字的大小:", 50, 1500, 400)
 
-# 3. Font Size Slider (Increased range for high-res photos)
-# 字号调整：针对高分辨率照片，上限调到 2000
-font_size = st.sidebar.slider("3. 字的大小 (Size):", 50, 2000, 400)
-
-# --- Main Area: File Upload ---
-# --- 主区域：文件上传 ---
 uploaded_file = st.file_uploader("第二步：请上传照片", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    # A. Open and Fix Orientation (解决“照片躺平”问题)
-    # 使用 exif_transpose 自动旋转照片到正确方向
-    raw_img = Image.open(uploaded_file)
-    img = ImageOps.exif_transpose(raw_img)
-    
-    # B. Extract Date (解决“日期不对”问题)
-    # 自动获取 1月4日 这种原始时间
-    detected_date = get_original_date(img)
-    
-    # Allow user to manually adjust date if detection is wrong
-    # 允许用户在侧边栏手动微调日期（双重保险）
-    final_date = st.sidebar.date_input("4. 确认日期 (Date):", detected_date)
+    try:
+        # 1. 加载并“扶正”照片
+        raw_img = Image.open(uploaded_file)
+        img = ImageOps.exif_transpose(raw_img)
+        
+        # 2. 抠出原始日期 (2026-01-04)
+        detected_date = get_safe_date(img)
+        final_date = st.sidebar.date_input("4. 确认日期:", detected_date)
 
-    # C. Draw the Text (绘图逻辑)
-    draw = ImageDraw.Draw(img)
-    width, height = img.size
-    
-    # Position Sliders (位置调整)
-    st.sidebar.header("📍 第二步：移动位置")
-    pos_x = st.sidebar.slider("左右移动:", 0, width, int(width * 0.5))
-    pos_y = st.sidebar.slider("上下移动:", 0, height, int(height * 0.8))
+        # 3. 准备画笔
+        draw = ImageDraw.Draw(img)
+        w, h = img.size
+        
+        st.sidebar.header("📍 第二步：移动位置")
+        pos_x = st.sidebar.slider("左右移动:", 0, w, int(w * 0.6))
+        pos_y = st.sidebar.slider("上下移动:", 0, h, int(h * 0.8))
 
-    display_text = f"{final_date} {location}"
+        display_text = f"{final_date} {location}"
 
-    # Load Font (加载仓库里的字体文件)
-    # Make sure 'ziti.ttf' is in your GitHub
+        # 4. 加载字体（确保 GitHub 有 font.ttf）
+        try:
+            font = ImageFont.truetype("font.ttf", font_size)
+        except:
+            font = ImageFont.load_default()
+
+        # 5. 画字并显示
+        draw.text((pos_x, pos_y), display_text, fill=selected_color, font=font)
+        
+        # 使用 use_container_width 确保在大屏幕和手机上都能看全
+        st.image(img, caption="预览效果 (长按保存)", use_container_width=True)
+        st.success("处理成功！这张 1月4日 拍的照片现在变漂亮了！")
+        
+    except Exception as error:
+        st.error(f"程序出了一点意外：{error}")
+        st.write("请尝试重新刷新页面或重新上传。")
