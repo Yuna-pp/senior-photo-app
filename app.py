@@ -95,7 +95,7 @@ if uploaded_file:
     )
     
     st.success("✅ 处理完成！")
-    st.info("直接长按保存即可。")
+    st.info("长按即可保存高清图片")
 
 else:
     st.info("请先上传照片。上传后会自动在下方显示调整选项。")
