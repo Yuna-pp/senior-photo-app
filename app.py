@@ -7,7 +7,7 @@ from PIL.ExifTags import TAGS
 
 # 1. 基础环境配置
 register_heif_opener()
-st.set_page_config(page_title="父母相册助手", layout="centered")
+st.set_page_config(page_title="相册助手（稳如泰山版）", layout="centered")
 
 # --- 核心函数：精准抓取日期 ---
 def get_accurate_date(image):
@@ -48,7 +48,7 @@ if uploaded_file:
         with col1:
             location = st.text_input("地点 (不填不显示):", "")
         with col2:
-            font_size = st.number_input("字的大小:", 50, 1500, 300)
+            font_size = st.number_input("字的大小:", 50, 1500, 100)
         with col3:
             detected_date = get_accurate_date(img)
             final_date = st.date_input("确认日期:", detected_date if detected_date else datetime.date.today())
