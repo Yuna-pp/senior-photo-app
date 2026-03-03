@@ -23,7 +23,7 @@ def get_accurate_date(image):
         pass
     return None
 
-st.title("📸 父母相册助手")
+st.title("📸 相册助手（稳如泰山版）")
 
 # --- 第一步：上传图片 (放在最上方) ---
 uploaded_file = st.file_uploader(
