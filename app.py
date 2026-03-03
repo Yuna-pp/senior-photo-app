@@ -48,7 +48,7 @@ def get_accurate_date(image):
         pass
     return None
 
-st.title("📸 父母相册助手 (V3.7 高清原图版)")
+st.title("📸 相册助手 (稳如泰山版)")
 
 uploaded_file = st.file_uploader("第一步：上传照片", type=["jpg", "jpeg", "png", "heic", "heif", "dng"])
 
