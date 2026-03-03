@@ -26,7 +26,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-st.title("📸 父母相册助手 (V3.0 移动优化版)")
+st.title("📸 相册助手 (稳如泰山版)")
 
 def get_accurate_date(image):
     try:
@@ -84,7 +84,7 @@ if uploaded_file:
         draw.text((pos_x, pos_y), display_text, fill=selected_color, font=font)
         
         st.image(img, caption="预览效果 (满意后长按保存)", use_container_width=True)
-        st.success("调整完成！")
+        st.success("调整完成！快去分享给朋友们吧")
         
     except Exception as e:
         st.error(f"处理失败: {e}")
