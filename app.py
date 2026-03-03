@@ -98,7 +98,7 @@ if uploaded_file:
             
             # 使用原生 st.image 渲染，避开 Base64 的超长字符串限制 [cite: 2026-03-03]
             st.image(full_draw_img, caption="✅ 已生成高清图，请长按此图保存", use_container_width=True)
-            st.success("好了！请‘长按’上方这张高清图选择保存。")
+            
 
 else:
     st.info("请先上传照片。")
