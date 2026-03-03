@@ -7,7 +7,7 @@ from pillow_heif import register_heif_opener
 from PIL.ExifTags import TAGS
 
 register_heif_opener()
-st.set_page_config(page_title="老人相册助手-正式版", layout="centered")
+st.set_page_config(page_title="相册助手-全显测试版", layout="centered")
 
 # --- 强力 CSS：收紧间距 ---
 st.markdown("""
@@ -45,7 +45,7 @@ def get_image_base64(image):
     image.save(buffered, format="JPEG", quality=85) # 适当降低质量确保 Base64 不溢出
     return base64.b64encode(buffered.getvalue()).decode()
 
-st.title("📸 相片助手（稳如泰山版）")
+st.title("📸 华为/荣耀全显版 (V4.2)")
 
 uploaded_file = st.file_uploader("第一步：上传照片", type=["jpg", "jpeg", "png", "heic", "heif"])
 
@@ -62,7 +62,7 @@ if uploaded_file:
     # --- 基础设置 (图片下方) ---
     st.subheader("⚙️ 调整文字信息")
     location = st.text_input("地点 (选填):", "")
-    font_size_full = st.number_input("字的大小:", 50, 2000, 300)
+    font_size_full = st.number_input("字的大小:", 50, 2000, 400)
     final_date = st.date_input("日期:", get_accurate_date(full_img) or datetime.date.today())
 
     # 侧边栏调位置
