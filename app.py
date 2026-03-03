@@ -65,7 +65,7 @@ if uploaded_file:
 
         # 4. Load Font
         try:
-            font = ImageFont.truetype("font.ttf", font_size)
+            font = ImageFont.truetype("ziti.ttf", font_size)
         except:
             st.warning("未找到字体文件，使用默认字体 (字会很小)")
             font = ImageFont.load_default()
