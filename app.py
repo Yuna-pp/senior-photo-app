@@ -10,24 +10,26 @@ register_heif_opener()
 
 st.set_page_config(page_title="父母相册助手", layout="centered")
 
-# --- 核心黑科技：CSS 注入，实现半透明毛玻璃侧边栏 ---
-# 这样大爷大妈在手机上拉出设置时，还能隐约看到底下的照片位置
+# --- 样式优化：让界面更清爽 ---
 st.markdown("""
     <style>
-    /* 侧边栏背景变半透明并加模糊 */
-    section[data-testid="stSidebar"] {
-        background-color: rgba(255, 255, 255, 0.6) !important;
-        backdrop-filter: blur(15px);
+    .main {
+        background-color: #f5f5f5;
     }
-    /* 针对手机端滑块的宽度微调 */
-    .stSlider {
-        padding-bottom: 20px;
+    .stButton>button {
+        width: 100%;
+        border-radius: 10px;
+        height: 3em;
+        background-color: #FF4B4B;
+        color: white;
     }
     </style>
     """, unsafe_allow_html=True)
 
-st.title("📸 相册助手 (稳如泰山版)")
+st.title("📸 父母相册助手 (V3.1 零障碍版)")
+st.write("第一步：先设置文字，第二步：上传照片")
 
+# --- 函数：读取日期 ---
 def get_accurate_date(image):
     try:
         exif = image.getexif()
@@ -41,19 +43,24 @@ def get_accurate_date(image):
         pass
     return None
 
-# --- 侧边栏设置 (现在的侧边栏是半透明的了！) ---
-st.sidebar.header("⚙️ 文字设置")
-location = st.sidebar.text_input("1. 输入地点 (不填则不显示):", "") 
+# --- 直接在主页面平铺设置区 (取消 st.sidebar) ---
+with st.container():
+    st.subheader("⚙️ 第一步：文字设置")
+    col1, col2 = st.columns(2)
+    with col1:
+        location = st.text_input("1. 输入地点 (不填不显示):", "")
+        color_options = {"亮黄色": "#FFFF00", "纯白色": "#FFFFFF", "大红色": "#FF0000", "黑色": "#000000"}
+        selected_color = color_options[st.selectbox("2. 选择颜色:", list(color_options.keys()))]
+    with col2:
+        font_size = st.slider("3. 字的大小:", 50, 1000, 300)
+        # 日期选择也放在这里
+        final_date_manual = st.date_input("4. 确认日期 (不准可改):", datetime.date.today())
 
-color_options = {
-    "亮黄色 (Yellow)": "#FFFF00", "纯白色 (White)": "#FFFFFF",
-    "大红色 (Red)": "#FF0000", "黑色 (Black)": "#000000"
-}
-selected_color = color_options[st.sidebar.selectbox("2. 选择颜色:", list(color_options.keys()))]
-font_size = st.sidebar.slider("3. 字的大小:", 50, 1000, 300)
+st.divider()
 
+# --- 第二步：上传照片 ---
 uploaded_file = st.file_uploader(
-    "上传照片 (支持所有手机格式)", 
+    "第二步：点击下方按钮上传照片", 
     type=["jpg", "jpeg", "png", "heic", "heif", "dng", "JPG", "JPEG", "PNG", "HEIC", "HEIF", "DNG"]
 )
 
@@ -62,29 +69,30 @@ if uploaded_file:
         raw_img = Image.open(uploaded_file)
         img = ImageOps.exif_transpose(raw_img)
         
+        # 尝试自动修正日期
         detected_date = get_accurate_date(img)
-        final_date = st.sidebar.date_input("4. 确认日期:", detected_date if detected_date else datetime.date.today())
+        # 如果自动读到了日期，就用自动的，否则用上面手动选的
+        date_to_use = detected_date if detected_date else final_date_manual
 
         draw = ImageDraw.Draw(img)
         w, h = img.size
         
-        st.sidebar.header("📍 位置微调")
-        # 左右/上下滑块：现在调的时候能看到底下的位置变化了！
-        pos_x = st.sidebar.slider("左右位置:", 0, w, int(w * 0.1))
-        pos_y = st.sidebar.slider("上下位置:", 0, h, int(h * 0.8))
+        st.subheader("📍 第三步：微调位置并保存")
+        # 位置滑块也直接放在主页面
+        pos_x = st.slider("左右移动:", 0, w, int(w * 0.1))
+        pos_y = st.slider("上下移动:", 0, h, int(h * 0.8))
 
-        display_text = f"{final_date} {location}" if location.strip() else f"{final_date}"
+        display_text = f"{date_to_use} {location}" if location.strip() else f"{date_to_use}"
 
         try:
             font = ImageFont.truetype("font.ttf", font_size)
         except:
             font = ImageFont.load_default()
 
-        # 极简绘制
         draw.text((pos_x, pos_y), display_text, fill=selected_color, font=font)
         
-        st.image(img, caption="预览效果 (满意后长按保存)", use_container_width=True)
-        st.success("调整完成！快去分享给朋友们吧")
+        st.image(img, caption="满意后长按下方图片保存", use_container_width=True)
+        st.success("大功告成！快去分享给朋友们吧")
         
     except Exception as e:
-        st.error(f"处理失败: {e}")
+        st.error(f"处理失败了，请换一张照片试试: {e}")
