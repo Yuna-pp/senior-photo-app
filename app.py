@@ -56,12 +56,12 @@ if uploaded_file:
 
     # --- 4. 基础设置区 (放在图片下方) ---
     st.subheader("⚙️ 调整文字信息")
-    col1, col2, col3 = st.columns([2, 1, 1])
+    col1, col2, col3 = st.columns([1, 1, 1])
     
     with col1:
         location = st.text_input("地点 (不填不显示):", "")
     with col2:
-        font_size = st.number_input("字的大小:", 50, 1500, 300)
+        font_size = st.number_input("字的大小:", 50, 1500, 200)
     with col3:
         detected_date = get_accurate_date(base_img)
         # 默认显示检测到的日期，没检测到就显示 2026-03-03
